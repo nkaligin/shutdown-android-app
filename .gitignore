@@ -2,3 +2,5 @@
 /bin/*
 /gen/*
 /.settings/org.eclipse.jdt.core.prefs
+/build.properties
+/local.properties
