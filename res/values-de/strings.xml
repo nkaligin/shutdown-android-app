@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Ausschalten</string>
-    <string name="are_you_sure_you_want_to_exit">Ausschalten?</string>
+    <string name="really_shutdown">Ausschalten?</string>
     <string name="yes">Ja</string>
     <string name="no">Nein</string>
     <string name="ok">OK</string>

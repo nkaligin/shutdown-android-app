@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Power Off</string>
-    <string name="are_you_sure_you_want_to_exit">Power Off?</string>
+    <string name="app_name">Shutdown</string>
+    <string name="really_shutdown">Shutdown?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="ok">OK</string>
