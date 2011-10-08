@@ -1,0 +1,7 @@
+h1. Shutdown - Android Root App
+
+*NEEDS ROOT PRIVILIGES*
+
+This app just asks you, if you are sure and then immediately turns off your phone using the <code>reboot -p</code> switch.
+
+*Note:* This _should_ be quite safe, but still, as your filesystems are not unmounted (just a sync call is made), there is the possibility that you may loose data. Therefore I do not take any warranty! *USE AT YOUR OWN RISK!*
