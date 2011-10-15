@@ -7,7 +7,18 @@
      Version Control Systems. -->
     <property file="local.properties" />
 
-	<property name="out.release.file.name" value="Shutdown-1.0-release.apk" />
+	<property file="version.properties" />
+	<property environment="env" />
+	<condition property="version.build" value="${env.BUILD_NUMBER}" else="0">
+		<isset property="env.BUILD_NUMBER" />
+	</condition>
+	<condition property="git.revision" value="${env.GIT_COMMIT}" else="0">
+		<isset property="env.GIT_COMMIT" />
+	</condition>
+	<property name="version.full" value="${version.major}.${version.minor}.${version.revision}.${version.build}" />
+	<property name="apk.label" value="Shutdown-${version.full}" />
+	<property name="out.release.file.name" value="${apk.label}-release.apk" />
+	<property name="version.code" value="${version.build}" />
 	
     <!-- The build.properties file can be created by you and is never touched
          by the 'android' tool. This is the place to change some of the
@@ -78,4 +89,27 @@
     -->
     <setup />
 
+	<target name="-pre-compile">
+		<propertyfile file="src/com/ubicoo/shutdown/version.properties">
+			<entry key="app.version" value="${version.full}" />
+			<entry key="build.version" value="${version.build}" />
+			<entry key="git.revision" value="${git.revision}" />
+		</propertyfile>
+		<echo message="Build #${version.build}" />
+		<echo message="Git Rev ${git.revision}" />
+		<echo message="Version ${version.full}" />
+		<echo message="APK label ${apk.label}" />
+		<condition property="isBuildServer">
+			<isset property="jenkins.isBuildServer" />
+		</condition>
+		<if condition="${isBuildServer}">
+			<then>
+				<replace file="AndroidManifest.xml" token="##DEV#SNAPSHOT##" value="${version.full}" />
+				<echo message="Running on build server." />
+			</then>
+			<else>
+				<echo message="Running local build." />
+			</else>
+		</if>
+	</target>
 </project>

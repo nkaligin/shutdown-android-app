@@ -4,3 +4,4 @@
 /.settings/org.eclipse.jdt.core.prefs
 /build.properties
 /local.properties
+/src/com/ubicoo/shutdown/version.properties
