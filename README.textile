@@ -6,6 +6,10 @@ This app just asks you, if you are sure and then immediately turns off your phon
 
 *Note:* This _should_ be quite safe, but still, as your filesystems are not unmounted (just a sync call is made), there is the possibility that you may loose data. Therefore I do not take any warranty! *USE AT YOUR OWN RISK!*
 
+h2. Button image
+
+The power button is from "Clker.com":http://www.clker.com, namely "here":http://www.clker.com/clipart-10550.html and thus public domain.
+
 h2. MIT License
 
 Copyright (c) 2011 Ubicoo - http://www.ubicoo.com
