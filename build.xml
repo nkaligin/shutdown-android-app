@@ -1,34 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="Shutdown" default="help">
+<project name="ShutdownApp" default="help">
 
-<!-- The local.properties file is created and updated by the 'android'
-     tool.
-     It contains the path to the SDK. It should *NOT* be checked into
-     Version Control Systems. -->
-    <property file="local.properties" />
 
 	<property file="version.properties" />
 	<property environment="env" />
 	<condition property="version.build" value="${env.BUILD_NUMBER}" else="0">
 		<isset property="env.BUILD_NUMBER" />
 	</condition>
-	<condition property="git.revision" value="${env.GIT_COMMIT}" else="0">
-		<isset property="env.GIT_COMMIT" />
-	</condition>
 	<property name="version.full" value="${version.major}.${version.minor}.${version.revision}.${version.build}" />
-	<property name="apk.label" value="Shutdown-${version.full}" />
-	<property name="out.release.file.name" value="${apk.label}-release.apk" />
+	<property name="apk.label" value="${ant.project.name}-${version.full}" />
 	<property name="version.code" value="${version.build}" />
+
 	
-    <!-- The build.properties file can be created by you and is never touched
-         by the 'android' tool. This is the place to change some of the
-         default property values used by the Ant rules.
+    <!-- The local.properties file is created and updated by the 'android' tool.
+         It contains the path to the SDK. It should *NOT* be checked into
+         Version Control Systems. -->
+    <loadproperties srcFile="local.properties" />
+
+    <!-- The ant.properties file can be created by you. It is only edited by the
+         'android' tool to add properties to it.
+         This is the place to change some Ant specific build properties.
          Here are some properties you may want to change/update:
 
          source.dir
              The name of the source directory. Default is 'src'.
          out.dir
              The name of the output directory. Default is 'bin'.
+
+         For other overridable properties, look at the beginning of the rules
+         files in the SDK, at tools/ant/build.xml
 
          Properties related to the SDK location or the project target should
          be updated using the 'android' tool with the 'update' action.
@@ -37,17 +37,24 @@
          application and should be checked into Version Control Systems.
 
          -->
-    <property file="build.properties" />
+    <property file="ant.properties" />
 
-    <!-- The default.properties file is created and updated by the 'android'
+    <!-- The project.properties file is created and updated by the 'android'
          tool, as well as ADT.
+
+         This contains project specific properties such as project target, and library
+         dependencies. Lower level build properties are stored in ant.properties
+         (or in .classpath for Eclipse projects).
+
          This file is an integral part of the build system for your
          application and should be checked into Version Control Systems. -->
-    <property file="default.properties" />
+    <loadproperties srcFile="project.properties" />
 
-
-    <!-- Required pre-setup import -->
-    <import file="${sdk.dir}/tools/ant/pre_setup.xml" />
+    <!-- quick check on sdk.dir -->
+    <fail
+            message="sdk.dir is missing. Make sure to generate local.properties using 'android update project'"
+            unless="sdk.dir"
+    />
 
 
 <!-- extension targets. Uncomment the ones where you want to do custom work
@@ -58,45 +65,15 @@
     <target name="-pre-compile">
     </target>
 
-    [This is typically used for code obfuscation.
-     Compiled code location: ${out.classes.absolute.dir}
-     If this is not done in place, override ${out.dex.input.absolute.dir}]
+    /* This is typically used for code obfuscation.
+       Compiled code location: ${out.classes.absolute.dir}
+       If this is not done in place, override ${out.dex.input.absolute.dir} */
     <target name="-post-compile">
     </target>
 -->
 
-    <!-- Execute the Android Setup task that will setup some properties
-         specific to the target, and import the build rules files.
-
-         The rules file is imported from
-            <SDK>/tools/ant/
-         Depending on the project type it can be either:
-         - main_rules.xml
-         - lib_rules.xml
-         - test_rules.xml
-
-         To customize existing targets, there are two options:
-         - Customize only one target:
-             - copy/paste the target into this file, *before* the
-               <setup> task.
-             - customize it to your needs.
-         - Customize the whole script.
-             - copy/paste the content of the rules files (minus the top node)
-               into this file, *after* the <setup> task
-             - disable the import of the rules by changing the setup task
-               below to <setup import="false" />.
-             - customize to your needs.
-    -->
-    <setup />
-
 	<target name="-pre-compile">
-		<propertyfile file="src/com/ubicoo/shutdown/version.properties">
-			<entry key="app.version" value="${version.full}" />
-			<entry key="build.version" value="${version.build}" />
-			<entry key="git.revision" value="${git.revision}" />
-		</propertyfile>
 		<echo message="Build #${version.build}" />
-		<echo message="Git Rev ${git.revision}" />
 		<echo message="Version ${version.full}" />
 		<echo message="APK label ${apk.label}" />
 		<condition property="isBuildServer">
@@ -112,4 +89,66 @@
 			</else>
 		</if>
 	</target>
+
+
+    <target name="-set-debug-files" depends="-set-mode-check">
+        <property name="out.packaged.file" location="${out.absolute.dir}/${ant.project.name}-debug-unaligned.apk" />
+        <property name="out.final.file" location="${out.absolute.dir}/${apk.label}-debug.apk" />
+    </target>
+
+	
+    <target name="-set-release-mode" depends="-set-mode-check">
+        <property name="out.packaged.file" location="${out.absolute.dir}/${ant.project.name}-release-unsigned.apk" />
+        <property name="out.final.file" location="${out.absolute.dir}/${apk.label}-release.apk" />
+
+        <!-- record the current build target -->
+        <property name="build.target" value="release" />
+
+        <property name="build.is.instrumented" value="false" />
+
+        <!-- release mode is only valid if the manifest does not explicitly
+             set debuggable to true. default is false. -->
+        <xpath input="AndroidManifest.xml" expression="/manifest/application/@android:debuggable"
+                output="build.is.packaging.debug" default="false"/>
+
+        <!-- signing mode: release -->
+        <property name="build.is.signing.debug" value="false" />
+
+        <if condition="${build.is.packaging.debug}">
+            <then>
+                <echo>*************************************************</echo>
+                <echo>****  Android Manifest has debuggable=true   ****</echo>
+                <echo>**** Doing DEBUG packaging with RELEASE keys ****</echo>
+                <echo>*************************************************</echo>
+            </then>
+            <else>
+                <!-- property only set in release mode.
+                     Useful for if/unless attributes in target node
+                     when using Ant before 1.8 -->
+                <property name="build.is.mode.release" value="true"/>
+            </else>
+        </if>
+    </target>
+	
+    <!-- Import the actual build file.
+
+         To customize existing targets, there are two options:
+         - Customize only one target:
+             - copy/paste the target into this file, *before* the
+               <import> task.
+             - customize it to your needs.
+         - Customize the whole content of build.xml
+             - copy/paste the content of the rules files (minus the top node)
+               into this file, replacing the <import> task.
+             - customize to your needs.
+
+         ***********************
+         ****** IMPORTANT ******
+         ***********************
+         In all cases you must update the value of version-tag below to read 'custom' instead of an integer,
+         in order to avoid having your file be overridden by tools such as "android update project"
+    -->
+    <!-- version-tag: 1 -->
+    <import file="${sdk.dir}/tools/ant/build.xml" />
+    
 </project>
