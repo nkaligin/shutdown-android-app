@@ -5,4 +5,7 @@
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="ok">OK</string>
+    <string name="not_rooted">Your phone needs to be rooted and this app needs to be allowed to run a superuser command.</string>
+    <string name="what">What?</string>
+    <string name="rooting_url">http://en.wikipedia.org/wiki/Rooting_(Android_OS)</string>
 </resources>

@@ -1,17 +1,17 @@
 package com.ubicoo.shutdown;
 
-import java.io.DataOutputStream;
-import java.io.IOException;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 
-public class Shutdown extends Activity {
+public class Shutdown extends Activity implements OnErrorListener {
 
-	private static final String TAG = Shutdown.class.getSimpleName();
+	static final String TAG = Shutdown.class.getSimpleName();
+
+	private ShutdownThread shutdownThread;
 
 	/** Called when the activity is first created. */
 	@Override
@@ -20,10 +20,12 @@ public class Shutdown extends Activity {
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setMessage(R.string.really_shutdown).setCancelable(false)
 				.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+					@Override
 					public void onClick(DialogInterface dialog, int id) {
 						Shutdown.this.shutdown();
 					}
 				}).setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
+					@Override
 					public void onClick(DialogInterface dialog, int id) {
 						Shutdown.this.finish();
 					}
@@ -33,17 +35,49 @@ public class Shutdown extends Activity {
 	}
 
 	private void shutdown() {
-		runRootCommand("reboot -p");
-
-		//this only works for system applications with special permissions
-		//startActivity(new Intent("android.intent.action.ACTION_REQUEST_SHUTDOWN"));
+		shutdownThread = new ShutdownThread(this);
+		shutdownThread.start();
 	}
 
-	private void handleError(Exception ex) {
-		String msg = ex.getClass().getSimpleName() + ": " + ex.getMessage();
-		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setMessage(msg).setCancelable(false).setNeutralButton(R.string.ok, new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int id) {
+	@Override
+	public void onNotRoot() {
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				showNotRootedDialog();
+			}
+		});
+	}
+
+	@Override
+	public void onError(final String msg) {
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				showErrorDialog(msg);
+			}
+		});
+	}
+
+	@Override
+	public void onError(final Exception exc) {
+		final String msg = exc.getClass().getSimpleName() + ": " + exc.getMessage();
+		onError(msg);
+	}
+
+	private void showErrorDialog(String msg) {
+		AlertDialog.Builder builder = buildErrorDialog(msg);
+		AlertDialog alert = builder.create();
+		alert.show();
+	}
+
+	private void showNotRootedDialog() {
+		final Uri uri = Uri.parse(getString(R.string.rooting_url));
+		AlertDialog.Builder builder = buildErrorDialog(getString(R.string.not_rooted));
+		builder.setNegativeButton(R.string.what, new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				startActivity(new Intent(Intent.ACTION_VIEW, uri));
 				Shutdown.this.finish();
 			}
 		});
@@ -51,37 +85,14 @@ public class Shutdown extends Activity {
 		alert.show();
 	}
 
-	public boolean runRootCommand(String command) {
-		Process process = null;
-		DataOutputStream os = null;
-		try {
-			process = Runtime.getRuntime().exec("su");
-			os = new DataOutputStream(process.getOutputStream());
-			os.writeBytes(command + "\n");
-			os.writeBytes("exit\n");
-			os.flush();
-			process.waitFor();
-		} catch (IOException e) {
-			handleError(e);
-			return false;
-		} catch (SecurityException e) {
-			handleError(e);
-			return false;
-		} catch (Exception e) {
-			Log.e(TAG, "Unexpected error", e);
-			handleError(e);
-			return false;
-		} finally {
-			try {
-				if (os != null) {
-					os.close();
-				}
-				process.destroy();
-			} catch (Exception e) {
-				// nothing
-			}
-		}
-		return true;
+	private AlertDialog.Builder buildErrorDialog(String msg) {
+		return new AlertDialog.Builder(this).setMessage(msg).setCancelable(false)
+				.setNeutralButton(R.string.ok, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int id) {
+						Shutdown.this.finish();
+					}
+				});
 	}
 
 }
