@@ -6,19 +6,17 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.KeyEvent;
 
-public class Shutdown extends Activity implements OnErrorListener {
+public class Shutdown extends Activity implements OnErrorListener, DialogInterface.OnKeyListener {
 
 	static final String TAG = Shutdown.class.getSimpleName();
 
-	private ShutdownThread shutdownThread;
-
-	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setMessage(R.string.really_shutdown).setCancelable(false)
+		builder.setMessage(R.string.really_shutdown).setOnKeyListener(this).setCancelable(true)
 				.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int id) {
@@ -27,7 +25,7 @@ public class Shutdown extends Activity implements OnErrorListener {
 				}).setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int id) {
-						Shutdown.this.finish();
+						Shutdown.this.forceExit();
 					}
 				});
 		AlertDialog alert = builder.create();
@@ -35,8 +33,7 @@ public class Shutdown extends Activity implements OnErrorListener {
 	}
 
 	private void shutdown() {
-		shutdownThread = new ShutdownThread(this);
-		shutdownThread.start();
+		new ShutdownThread(this).start();
 	}
 
 	@Override
@@ -78,7 +75,7 @@ public class Shutdown extends Activity implements OnErrorListener {
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				startActivity(new Intent(Intent.ACTION_VIEW, uri));
-				Shutdown.this.finish();
+				Shutdown.this.forceExit();
 			}
 		});
 		AlertDialog alert = builder.create();
@@ -86,13 +83,28 @@ public class Shutdown extends Activity implements OnErrorListener {
 	}
 
 	private AlertDialog.Builder buildErrorDialog(String msg) {
-		return new AlertDialog.Builder(this).setMessage(msg).setCancelable(false)
+		return new AlertDialog.Builder(this).setMessage(msg).setOnKeyListener(this).setCancelable(true)
 				.setNeutralButton(R.string.ok, new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int id) {
-						Shutdown.this.finish();
+						Shutdown.this.forceExit();
 					}
 				});
+	}
+
+	@Override
+	public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
+		if (keyCode == KeyEvent.KEYCODE_BACK) {
+			dialog.dismiss();
+			forceExit();
+			return true;
+		}
+		return false;
+	}
+
+	private void forceExit() {
+		finish();
+		Utils.killMyProcess();
 	}
 
 }
