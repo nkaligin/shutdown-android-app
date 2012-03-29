@@ -30,7 +30,7 @@ public class ShutdownThread extends Thread {
 
 			} catch (IOException e) {
 				logFailure(e);
-				if (e.getMessage().contains("Error running exec(). Command: [su]")) {
+				if (e.getMessage().contains("Error running exec(). Command: [su")) {
 					errorListener.onNotRoot();
 				} else {
 					errorListener.onError(e);
@@ -45,7 +45,7 @@ public class ShutdownThread extends Thread {
 					aliveCheck.start();
 					Log.i(TAG, "Waiting for shutdown...");
 					int exitCode = proc.waitFor();
-					Log.i(TAG, "Done. Process exited with code " + exitCode + ".");
+					Log.i(TAG, "Process exited with code " + exitCode + ".");
 					aliveCheck.interrupt();
 				}
 			} catch (InterruptedException e) {
